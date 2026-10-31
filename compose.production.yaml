@@ -1,0 +1,58 @@
+name: earthveda
+x-app: &app
+  image: ${APP_IMAGE:?Set a GHCR image digest in release.env}
+  env_file: .env.production
+  environment:
+    NODE_ENV: production
+    HOST: 0.0.0.0
+    PORT: 8787
+    TRUST_PROXY: 1
+    UPLOAD_DIR: /app/data/uploads
+  restart: unless-stopped
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: ['/tmp:size=64m,mode=1777']
+  volumes: [uploads:/app/data/uploads]
+  stop_grace_period: 35s
+  logging:
+    driver: json-file
+    options: { max-size: '10m', max-file: '3' }
+services:
+  api:
+    <<: *app
+    healthcheck:
+      test: [CMD, node, server/scripts/healthcheck.js, api]
+      interval: 30s
+      timeout: 15s
+      start_period: 30s
+      retries: 3
+  worker:
+    <<: *app
+    command: [node, server/worker.js]
+    healthcheck:
+      test: [CMD, node, server/scripts/healthcheck.js, worker]
+      interval: 30s
+      timeout: 15s
+      start_period: 60s
+      retries: 3
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    ports: ['80:80', '443:443', '443:443/udp']
+    environment:
+      DOMAIN: ${DOMAIN:?Set your shop hostname in release.env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api: { condition: service_healthy }
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
+volumes:
+  uploads:
+  caddy_data:
+  caddy_config:

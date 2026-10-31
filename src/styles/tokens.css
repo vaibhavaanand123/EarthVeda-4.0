@@ -1,0 +1,36 @@
+/* Earthveda design tokens.
+   Palette is taken from the product world: kadhai-green ink, roasted-chana gold,
+   chilli red, and a pale sage "mist" instead of the usual cream. Each product
+   also carries its own pouch colour as --accent. */
+:root {
+  --ink: #12372a;
+  --ink-2: #2b4a3d;
+  --muted: #53665a;
+  --mist: #eef1ea;
+  --mist-2: #e2e8dc;
+  --paper: #ffffff;
+  --chana: #e9b949;
+  --chana-2: #f6dc93;
+  --chilli: #c8391f;
+  --cocoa: #2b1a12;
+  --line: #d3dbcf;
+  --ok: #1f7a4d;
+  --danger: #b3261e;
+
+  --font-display: 'Bricolage Grotesque Variable', 'Arial Narrow', system-ui, sans-serif;
+  --font-body:
+    'Instrument Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --r-sm: 8px;
+  --r: 14px;
+  --r-lg: 26px;
+  --pill: 999px;
+
+  --shadow-1: 0 1px 2px rgb(18 55 42 / 0.06), 0 2px 8px rgb(18 55 42 / 0.05);
+  --shadow-2: 0 10px 30px -10px rgb(18 55 42 / 0.28);
+
+  --container: 1280px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --header-h: 68px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}

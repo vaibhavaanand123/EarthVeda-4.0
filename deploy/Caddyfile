@@ -1,0 +1,11 @@
+{$DOMAIN} {
+  encode zstd gzip
+  request_body {
+    max_size 4MB
+  }
+  reverse_proxy api:8787 {
+    health_uri /api/ready
+    health_interval 30s
+    health_timeout 5s
+  }
+}

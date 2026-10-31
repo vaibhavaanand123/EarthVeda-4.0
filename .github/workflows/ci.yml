@@ -1,0 +1,112 @@
+name: Storefront CI and optional full-stack release
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  # Never interrupt an active main-branch release. Superseded PR checks may stop.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - run: npm run check
+      - run: npm audit --audit-level=high
+  backend:
+    if: vars.BACKEND_ENABLED == 'true'
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with: { node-version: '24', cache: npm }
+      - run: npm ci
+      - name: Test deployment failure and rollback paths
+        run: npm run test:deployment
+      - name: Start disposable MongoDB replica set
+        run: |
+          cp .env.example .env
+          docker compose up -d mongo mongo-init
+          docker compose wait mongo-init
+      - name: MongoDB transaction and HTTP integration tests
+        run: npm run test:integration
+        env:
+          TEST_MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true
+      - name: Stop disposable MongoDB
+        if: always()
+        run: docker compose down --volumes
+  image:
+    if: vars.BACKEND_ENABLED == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [verify, backend]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions: { contents: read, packages: write }
+    outputs:
+      digest: ${{ steps.release.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lowercase image name
+        id: name
+        env: { REPOSITORY: '${{ github.repository }}' }
+        run: echo "image=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        id: build
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.name.outputs.image }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          build-args: |
+            VITE_PUBLIC_SITE_URL=${{ vars.PUBLIC_SITE_URL }}
+            VITE_WHATSAPP_NUMBER=${{ vars.WHATSAPP_NUMBER }}
+          provenance: true
+          sbom: true
+      - name: Scan the exact published digest
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.name.outputs.image }}@${{ steps.build.outputs.digest }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: table
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release digest
+        id: release
+        env:
+          IMAGE: ${{ steps.name.outputs.image }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "APP_IMAGE=$IMAGE@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+  deploy:
+    needs: image
+    # Set this repository variable after provisioning the host and database.
+    if: vars.DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      image_digest: ${{ needs.image.outputs.digest }}
+    secrets:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}

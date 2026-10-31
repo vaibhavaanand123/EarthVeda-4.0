@@ -1,0 +1,79 @@
+name: earthveda-dev
+services:
+  mongo:
+    image: mongo:8.0
+    command: [mongod, --replSet, rs0, --bind_ip_all]
+    ports: ['127.0.0.1:27017:27017']
+    volumes: [mongo_data:/data/db]
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --eval, 'db.adminCommand({ping:1}).ok ? quit(0) : quit(1)']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  mongo-init:
+    image: mongo:8.0
+    depends_on:
+      mongo: { condition: service_healthy }
+    restart: 'no'
+    entrypoint: [mongosh, 'mongodb://mongo:27017/?directConnection=true', --quiet, --eval]
+    command:
+      - >-
+        try { rs.status(); } catch(e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}); }
+        for(let i=0;i<60;i++){if(db.hello().isWritablePrimary){quit(0)}sleep(1000)}quit(1)
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ['127.0.0.1:1025:1025', '127.0.0.1:8025:8025']
+  setup:
+    profiles: [app]
+    build:
+      context: .
+      args:
+        VITE_PUBLIC_SITE_URL: ${VITE_PUBLIC_SITE_URL:-http://localhost:8787}
+        VITE_WHATSAPP_NUMBER: ${VITE_WHATSAPP_NUMBER:-}
+    image: earthveda-local
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: 'mongodb://mongo:27017/?replicaSet=rs0&directConnection=true'
+    depends_on:
+      mongo-init: { condition: service_completed_successfully }
+    command: [node, server/scripts/setupDatabase.js, --seed, --demo-stock]
+  api:
+    profiles: [app]
+    image: earthveda-local
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: 'mongodb://mongo:27017/?replicaSet=rs0&directConnection=true'
+      HOST: 0.0.0.0
+      UPLOAD_DIR: /app/data/uploads
+      SMTP_URL: 'smtp://mailpit:1025'
+    ports: ['127.0.0.1:8787:8787']
+    volumes: [uploads:/app/data/uploads]
+    depends_on:
+      setup: { condition: service_completed_successfully }
+    init: true
+  worker:
+    profiles: [app]
+    image: earthveda-local
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: 'mongodb://mongo:27017/?replicaSet=rs0&directConnection=true'
+      HOST: 0.0.0.0
+      UPLOAD_DIR: /app/data/uploads
+      SMTP_URL: 'smtp://mailpit:1025'
+    command: [node, server/worker.js]
+    volumes: [uploads:/app/data/uploads]
+    depends_on:
+      setup: { condition: service_completed_successfully }
+    init: true
+    healthcheck:
+      test: [CMD, node, server/scripts/healthcheck.js, worker]
+      interval: 30s
+      timeout: 15s
+      start_period: 60s
+      retries: 3
+volumes:
+  mongo_data:
+  uploads:

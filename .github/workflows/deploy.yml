@@ -1,0 +1,65 @@
+name: Deploy verified image
+on:
+  workflow_call:
+    inputs:
+      image_digest:
+        description: Digest emitted only after the calling CI image scan passes
+        type: string
+        required: true
+    secrets:
+      # Validated before SSH; optional here to permit environment-scoped secrets.
+      DEPLOY_HOST: { required: false }
+      DEPLOY_USER: { required: false }
+      DEPLOY_SSH_KEY: { required: false }
+      DEPLOY_KNOWN_HOSTS: { required: false }
+permissions: { contents: read }
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    # Optional on a supported plan: environment: production
+    # Default repository secrets also work for private GitHub Free repositories.
+    timeout-minutes: 15
+    concurrency: { group: earthveda-production, cancel-in-progress: false }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Skip a superseded main-branch build
+        id: current
+        run: |
+          latest=$(git ls-remote origin refs/heads/main | cut -f1)
+          [[ "$latest" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          if [[ "$latest" == "$GITHUB_SHA" ]]; then
+            echo 'deploy=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'A newer main commit exists; its passing build will deploy.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Configure verified SSH identity
+        if: steps.current.outputs.deploy == 'true'
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          [[ -n "$SSH_KEY" && -n "$KNOWN_HOSTS" ]] || { echo 'Missing deployment SSH secrets'; exit 1; }
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Deploy scanned digest and wait for HTTPS readiness
+        if: steps.current.outputs.deploy == 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DIGEST: ${{ inputs.image_digest }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]] || exit 1
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*$ ]] || exit 1
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || exit 1
+          IMAGE="ghcr.io/${REPOSITORY,,}@$DIGEST"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes \
+            -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            "$DEPLOY_USER@$DEPLOY_HOST" "release $IMAGE"
+          echo "Healthy release: $IMAGE" >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove runner SSH private key
+        if: always()
+        run: rm -f ~/.ssh/id_ed25519

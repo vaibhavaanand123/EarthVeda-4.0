@@ -1,0 +1,36 @@
+{
+  "release": "6.1.1",
+  "verified_at": "2026-10-31",
+  "runtime": "Node 24.22.1",
+  "checks": {
+    "lint": "pass",
+    "format": "pass",
+    "unit_business_tests": 50,
+    "dom_interaction_tests": 11,
+    "mongodb_integration_tests": 16,
+    "deployment_scenarios": 10,
+    "preview_build": "pass",
+    "connected_build": "pass",
+    "production_dependency_audit": {
+      "total": 0
+    },
+    "full_dependency_audit": {
+      "moderate_dev_only": 6,
+      "high": 0,
+      "critical": 0
+    }
+  },
+  "scope": "Original UI preserved. No live merchant deployment or live payment test. See docs/VERIFICATION.md.",
+  "pricing_eur_cents": {
+    "foxnuts": 299,
+    "protein": 1499,
+    "shipping_DE": 499,
+    "shipping_GB": 1199
+  },
+  "lockfile_sha256": "37636194c8d84c6df68a761f52d2b885fa4f714671018616da70ee90db11565a",
+  "original_ui": {
+    "stylesheets_unchanged": 8,
+    "product_images_unchanged": 14,
+    "details": "ORIGINAL_UI_VERIFICATION.json"
+  }
+}

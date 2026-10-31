@@ -1,0 +1,97 @@
+{
+  "baseline_archive": "EarthVeda_3.O-dependabot-npm_and_yarn-eslint-plugin-react-hooks-7.1.1.zip",
+  "scope": "Original source CSS and product-image bytes retained. Existing components only receive pricing and reliability fixes.",
+  "stylesheets": 8,
+  "image_assets": 14,
+  "all_match": true,
+  "files": [
+    {
+      "path": "public/images/asian-pepper-garlic.webp",
+      "sha256": "a94dbb6a711585d1f71eb34566218231cf56044b8c854793fadd1c71defd69fb"
+    },
+    {
+      "path": "public/images/butter-chicken.webp",
+      "sha256": "b6ca1da308c96cee30e908c407ffc89da55d390a3c1ba88e2dbb6e16ffb2392e"
+    },
+    {
+      "path": "public/images/cheese-herbs.webp",
+      "sha256": "5e0952bb16d663d66c76a534e3e6adae285ba39f6ce6c2394cf25eb5af1c7b0f"
+    },
+    {
+      "path": "public/images/cream-onion.webp",
+      "sha256": "da09d6cd81f5eb9345cc5ee1bf2dba6e0c7ce713201bbc06230ca5832e5cdb40"
+    },
+    {
+      "path": "public/images/four-cheese.webp",
+      "sha256": "9d46bf00140d99d4311de6cf62bc222a2069a307e5e596d886bc24a421d62c56"
+    },
+    {
+      "path": "public/images/peri-peri.webp",
+      "sha256": "a02cebb971b7bff37a15e38cb976c53d468cf7252ed9ea4880df50517a5dc780"
+    },
+    {
+      "path": "public/images/pink-salt-pepper.webp",
+      "sha256": "52e76781d4e49d0f6426db7743ffc48353fbe3a0fb84c46625a99983e8821c73"
+    },
+    {
+      "path": "public/images/product-fallback.svg",
+      "sha256": "1207cd8f71217751c1d7ebe754f723d3fb9f3e2c6559f085957a9b68d81878e0"
+    },
+    {
+      "path": "public/images/protein-chocolate-clean.webp",
+      "sha256": "ae0d364fe669702a1d8f06fce5cd99c2df24e2176fb340f815f1bf611fa3e3cf"
+    },
+    {
+      "path": "public/images/protein-chocolate.webp",
+      "sha256": "ae0d364fe669702a1d8f06fce5cd99c2df24e2176fb340f815f1bf611fa3e3cf"
+    },
+    {
+      "path": "public/images/protein-mango-clean.webp",
+      "sha256": "d4ee027eabd48bac38f2da11c8ed2468022fa13f9e807a571a53937fb42975f1"
+    },
+    {
+      "path": "public/images/protein-mango.webp",
+      "sha256": "d4ee027eabd48bac38f2da11c8ed2468022fa13f9e807a571a53937fb42975f1"
+    },
+    {
+      "path": "public/images/protein-royal-cream-clean.webp",
+      "sha256": "a5854ecd75502f5c95553134c76050faf15dcd6d627d3ade50017bb13b4aaa5c"
+    },
+    {
+      "path": "public/images/protein-royal-cream.webp",
+      "sha256": "a5854ecd75502f5c95553134c76050faf15dcd6d627d3ade50017bb13b4aaa5c"
+    },
+    {
+      "path": "src/admin/admin.css",
+      "sha256": "1fc975caec4fb5614a9e9d8983d5e6bc212504a42f6eb2f2f227b3d40b26caf4"
+    },
+    {
+      "path": "src/styles/base.css",
+      "sha256": "8d935fbb7fff0745bdca6681b2a6626e52ddba5be88b8db87422027c69a0f590"
+    },
+    {
+      "path": "src/styles/components.css",
+      "sha256": "acc51bde76e460f73715d02776c22bf1e5b7d53d0769a86a38d74436a50d6170"
+    },
+    {
+      "path": "src/styles/features.css",
+      "sha256": "0f8043675f062ba183a8ff99a4813bf31d4160ca8d935c9ee7722c2db16b1979"
+    },
+    {
+      "path": "src/styles/layout.css",
+      "sha256": "939ebb6ab563ea3bd31202ff5b09230dbdb5dd3e24db9bb82e36719bce252018"
+    },
+    {
+      "path": "src/styles/pages.css",
+      "sha256": "ab97725402470d4d99ac9584d15b62ed2e7a9514797de8b5bbc57303e9d7989c"
+    },
+    {
+      "path": "src/styles/redesign.css",
+      "sha256": "c1baaa3a761add0e82d9fd29d757173c56b0f05899eb9a220cb91d9280598365"
+    },
+    {
+      "path": "src/styles/tokens.css",
+      "sha256": "5f16a8d8c0ef7da16b991668786d4a06718ea9384513b7427a4744206550bd44"
+    }
+  ]
+}
