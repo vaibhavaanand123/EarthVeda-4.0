@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "npm run check",
+  "buildCommand": "npx --no-install prettier --write vercel.json && npm run check",
   "outputDirectory": "dist",
   "installCommand": "npm ci --include=dev",
   "trailingSlash": false,
