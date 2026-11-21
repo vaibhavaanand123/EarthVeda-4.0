@@ -1,5 +1,5 @@
 # Pin the image digest in your release policy; tags below track security updates.
-FROM node:24-bookworm-slim AS dependencies
+FROM node:26-bookworm-slim AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -13,7 +13,7 @@ ENV VITE_COMMERCE_MODE=$VITE_COMMERCE_MODE
 COPY . .
 RUN npm run build && npm prune --omit=dev
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:26-bookworm-slim AS runtime
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=8787 UPLOAD_DIR=/app/data/uploads
 WORKDIR /app
 COPY --from=build --chown=node:node /app/package.json /app/package-lock.json ./
